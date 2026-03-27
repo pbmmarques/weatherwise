@@ -6,7 +6,8 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -21,11 +22,7 @@ def chat():
     messages = body.get("messages", [])
     last_message = system + "\n\n" + messages[-1]["content"] if system else messages[-1]["content"]
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=last_message
-    )
-
+    response = model.generate_content(last_message)
     return jsonify({"content": [{"text": response.text}]})
 
 if __name__ == "__main__":
