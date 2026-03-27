@@ -271,7 +271,7 @@ async function sendMessage(){
   if(cities.length){const data=await Promise.all(cities.map(c=>getCityWeather(c)));const valid=data.filter(Boolean);if(valid.length)ctx=`\n\n[DADOS CLIMÁTICOS REAIS - ${new Date().toLocaleDateString('pt-BR')}]\n`+valid.join('\n\n');}
   chatHistory.push({role:'user',content:text+ctx});
   try{
-    const res=await fetch('http://localhost:5000/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:`Você é o assistente climático do WeatherWise. Quando receber dados entre [DADOS CLIMÁTICOS REAIS], use-os para responder com precisão. Seja direto e amigável. Responda sempre em português. Não invente dados climáticos.`,messages:chatHistory})});
+    const res=await fetch('https://weatherwise-api-mf4a.onrender.com/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:`Você é o assistente climático do WeatherWise. Quando receber dados entre [DADOS CLIMÁTICOS REAIS], use-os para responder com precisão. Seja direto e amigável. Responda sempre em português. Não invente dados climáticos.`,messages:chatHistory})});
     const data=await res.json();
     const reply=data.content?.[0]?.text||'Não consegui processar. Tente novamente.';
     chatHistory[chatHistory.length-1]={role:'user',content:text};
