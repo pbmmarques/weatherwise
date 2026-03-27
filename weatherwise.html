@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeatherWise — Previsão do Tempo</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  body { min-height:100vh; background:linear-gradient(160deg,#080E1A 0%,#0C1425 35%,#111B30 70%,#0D1520 100%); font-family:'Outfit',sans-serif; color:#E2E8F0; overflow-x:hidden; position:relative; }
+  body::before,body::after { content:''; position:fixed; border-radius:50%; pointer-events:none; z-index:0; }
+  body::before { top:-120px; right:-80px; width:350px; height:350px; background:radial-gradient(circle,rgba(37,99,235,0.07),transparent 70%); animation:orb1 12s ease-in-out infinite; }
+  body::after { bottom:-80px; left:-100px; width:300px; height:300px; background:radial-gradient(circle,rgba(245,158,11,0.04),transparent 70%); animation:orb2 15s ease-in-out 3s infinite; }
+  @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-20px) scale(1.1)} }
+  @keyframes orb2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-20px,30px) scale(0.9)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes barGrow { from{transform:scaleX(0);opacity:0} to{transform:scaleX(1);opacity:1} }
+  @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+  @keyframes heroFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes typingDot { 0%,80%,100%{opacity:.2;transform:translateY(0)} 40%{opacity:1;transform:translateY(-4px)} }
+  .container { max-width:800px; margin:0 auto; padding:0 24px 40px; position:relative; z-index:1; }
+  .glass { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:20px; backdrop-filter:blur(12px); transition:border-color .2s; }
+  .glass:hover { border-color:rgba(255,255,255,0.1); }
+  .header { display:flex; align-items:center; gap:12px; padding:28px 0; }
+  .header-icon { width:42px; height:42px; border-radius:14px; background:linear-gradient(135deg,#1E3A5F,#2563EB); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 14px rgba(37,99,235,0.3); animation:heroFloat 3s ease-in-out infinite; font-size:20px; }
+  .header-title { font-size:20px; font-weight:800; letter-spacing:-.03em; background:linear-gradient(135deg,#E2E8F0,#94A3B8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .header-sub { font-size:11.5px; color:#4A5568; font-weight:500; letter-spacing:.04em; margin-top:1px; }
+  .tabs { display:flex; gap:4px; margin-bottom:20px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:4px; }
+  .tab-btn { flex:1; padding:10px; border-radius:10px; border:none; cursor:pointer; background:transparent; color:#4A5568; font-family:inherit; font-size:13.5px; font-weight:600; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:7px; }
+  .tab-btn.active { background:rgba(37,99,235,0.18); color:#93C5FD; border:1px solid rgba(37,99,235,0.25); }
+  .tab-btn:hover:not(.active) { color:#94A3B8; background:rgba(255,255,255,0.03); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  .search-box { display:flex; align-items:center; gap:10px; padding:6px 6px 6px 20px; margin-bottom:14px; }
+  .search-icon { color:#3E4C63; font-size:16px; flex-shrink:0; }
+  .search-input { flex:1; border:none; background:transparent; color:#E2E8F0; font-size:15px; font-family:inherit; padding:12px 0; outline:none; }
+  .search-input::placeholder { color:#3E4C63; }
+  .search-btn { padding:10px 22px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:#fff; font-weight:600; font-size:14px; font-family:inherit; transition:all .2s; box-shadow:0 2px 12px rgba(37,99,235,0.25); }
+  .search-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(37,99,235,0.4); }
+  .presets { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:32px; }
+  .preset-btn { padding:8px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); color:#7B8BA5; font-size:12.5px; cursor:pointer; transition:all .2s; font-family:inherit; font-weight:500; }
+  .preset-btn:hover { background:rgba(37,99,235,0.12); border-color:rgba(37,99,235,0.3); color:#93C5FD; }
+  .welcome { text-align:center; padding:60px 20px; animation:fadeUp .5s ease-out; }
+  .welcome-globe { font-size:56px; margin-bottom:16px; animation:heroFloat 4s ease-in-out infinite; }
+  .welcome-title { font-size:18px; font-weight:600; color:#CBD5E1; margin-bottom:8px; }
+  .welcome-desc { font-size:13.5px; color:#4A5568; max-width:340px; margin:0 auto; line-height:1.6; }
+  .error-msg { padding:16px 20px; border-radius:16px; margin-bottom:24px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#FCA5A5; font-size:14px; font-weight:500; animation:fadeUp .3s ease-out; }
+  .skeleton { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:12px; }
+  .hero { padding:28px 28px 24px; margin-bottom:18px; position:relative; overflow:hidden; }
+  .hero-bg-icon { position:absolute; top:-30px; right:-20px; font-size:120px; opacity:.06; pointer-events:none; }
+  .hero-top { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; }
+  .hero-label { font-size:13px; color:#64748B; font-weight:600; letter-spacing:.06em; margin-bottom:6px; text-transform:uppercase; }
+  .hero-city { font-size:26px; font-weight:800; letter-spacing:-.03em; margin-bottom:2px; }
+  .hero-coords { font-size:13px; color:#64748B; font-weight:500; }
+  .hero-temp { display:flex; align-items:flex-start; justify-content:flex-end; gap:4px; }
+  .hero-temp-num { font-size:60px; font-weight:300; letter-spacing:-.04em; line-height:1; }
+  .hero-temp-unit { font-size:22px; font-weight:400; color:#64748B; margin-top:6px; }
+  .hero-condition { font-size:14px; color:#94A3B8; font-weight:500; text-align:right; }
+  .hero-feels { font-size:12px; color:#4A5568; margin-top:4px; text-align:right; }
+  .details-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:18px; }
+  .detail-card { display:flex; flex-direction:column; gap:6px; padding:18px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); transition:all .2s; }
+  .detail-card:hover { border-color:rgba(255,255,255,0.1); transform:translateY(-2px); }
+  .detail-label { font-size:11px; color:#4A5568; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+  .detail-value { font-size:24px; font-weight:700; }
+  .detail-unit { font-size:14px; color:#64748B; }
+  .uv-badge { font-size:11px; font-weight:600; margin-left:8px; padding:3px 8px; border-radius:6px; display:inline-block; }
+  .wind-compass { position:relative; width:52px; height:52px; }
+  .wind-speed { position:absolute; bottom:-18px; left:50%; transform:translateX(-50%); font-size:11px; color:#94A3B8; white-space:nowrap; font-weight:600; }
+  .forecast-title { font-size:12px; color:#4A5568; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:16px; }
+  .day-row { display:grid; grid-template-columns:36px 44px 1fr 42px 42px; align-items:center; gap:10px; padding:11px 8px; border-bottom:1px solid rgba(255,255,255,0.04); border-radius:10px; transition:background .15s; }
+  .day-row:last-child { border-bottom:none; }
+  .day-row:hover { background:rgba(255,255,255,0.02); }
+  .day-name { font-size:13px; font-weight:500; color:#94A3B8; }
+  .day-name.today { font-weight:700; color:#93C5FD; }
+  .day-icon { font-size:20px; text-align:center; }
+  .temp-bar-bg { position:relative; height:6px; border-radius:3px; background:rgba(255,255,255,0.06); width:100%; }
+  .temp-bar-fill { position:absolute; top:0; height:100%; border-radius:3px; }
+  .temp-min { font-size:13px; color:#64748B; text-align:right; font-weight:500; }
+  .temp-max { font-size:13px; font-weight:600; text-align:right; }
+  .rain-section { padding:22px; margin-top:18px; }
+  .rain-bars { display:flex; align-items:flex-end; gap:6px; height:100px; }
+  .rain-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .rain-pct { font-size:10px; font-weight:600; }
+  .rain-bar { width:100%; max-width:36px; border-radius:6px; }
+  .rain-day { font-size:10px; color:#4A5568; font-weight:500; }
+  .footer { text-align:center; margin-top:28px; font-size:11px; color:#2D3748; font-weight:500; letter-spacing:.03em; }
+  #results { animation:fadeUp .4s ease-out; }
+  .sun-row { font-size:14px; font-weight:600; margin-top:4px; }
+  .chat-wrap { display:flex; flex-direction:column; height:560px; }
+  .chat-messages { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.06) transparent; }
+  .chat-messages::-webkit-scrollbar { width:4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:4px; }
+  .chat-bubble { max-width:80%; padding:13px 17px; border-radius:18px; font-size:14px; line-height:1.65; animation:fadeUp .3s ease-out; }
+  .chat-bubble.user { align-self:flex-end; background:linear-gradient(135deg,#1E3A8A,#2563EB); border:1px solid rgba(37,99,235,0.3); color:#E0ECFF; border-bottom-right-radius:5px; }
+  .chat-bubble.assistant { align-self:flex-start; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:#CBD5E1; border-bottom-left-radius:5px; }
+  .bubble-label { font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#3B82F6; text-transform:uppercase; margin-bottom:6px; }
+  .typing-indicator { align-self:flex-start; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:18px; border-bottom-left-radius:5px; padding:14px 18px; display:flex; gap:5px; align-items:center; animation:fadeUp .3s ease-out; }
+  .typing-indicator span { width:6px; height:6px; border-radius:50%; background:#3B82F6; animation:typingDot 1.2s ease-in-out infinite; }
+  .typing-indicator span:nth-child(2) { animation-delay:.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay:.4s; }
+  .chat-input-area { padding:14px 16px; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:10px; align-items:flex-end; }
+  .chat-textarea { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 16px; color:#E2E8F0; font-family:inherit; font-size:14px; resize:none; outline:none; max-height:120px; min-height:44px; line-height:1.5; transition:border-color .2s; scrollbar-width:none; }
+  .chat-textarea:focus { border-color:rgba(37,99,235,0.4); }
+  .chat-textarea::placeholder { color:#3E4C63; }
+  .chat-send-btn { width:44px; height:44px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(135deg,#2563EB,#1D4ED8); display:flex; align-items:center; justify-content:center; font-size:18px; transition:all .2s; flex-shrink:0; box-shadow:0 2px 12px rgba(37,99,235,0.25); }
+  .chat-send-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(37,99,235,0.4); }
+  .chat-send-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+  .chat-suggestions { padding:0 16px 14px; display:flex; flex-wrap:wrap; gap:8px; }
+  .chat-suggestion { padding:7px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.03); color:#64748B; font-size:12px; cursor:pointer; transition:all .2s; font-family:inherit; }
+  .chat-suggestion:hover { background:rgba(37,99,235,0.1); border-color:rgba(37,99,235,0.25); color:#93C5FD; }
+  .chat-disclaimer { text-align:center; font-size:11px; color:#2D3748; padding:8px 16px 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-icon">⛅</div>
+    <div>
+      <div class="header-title">WeatherWise</div>
+      <div class="header-sub">PREVISÃO EM TEMPO REAL</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-forecast" onclick="switchTab('forecast')">🌤️ Previsão</button>
+    <button class="tab-btn" id="tab-chat" onclick="switchTab('chat')">🤖 Assistente IA</button>
+  </div>
+
+  <div class="tab-panel active" id="panel-forecast">
+    <div class="glass search-box">
+      <span class="search-icon">🔍</span>
+      <input id="searchInput" class="search-input" placeholder="Buscar cidade..." autocomplete="off">
+      <button id="searchBtn" class="search-btn">Buscar</button>
+    </div>
+    <div class="presets">
+      <button class="preset-btn" data-city="São Paulo">São Paulo</button>
+      <button class="preset-btn" data-city="Rio de Janeiro">Rio de Janeiro</button>
+      <button class="preset-btn" data-city="Lisboa">Lisboa</button>
+      <button class="preset-btn" data-city="Tokyo">Tokyo</button>
+      <button class="preset-btn" data-city="New York">New York</button>
+      <button class="preset-btn" data-city="Paris">Paris</button>
+    </div>
+    <div id="content">
+      <div class="welcome" id="welcome">
+        <div class="welcome-globe">🌍</div>
+        <div class="welcome-title">Pesquise uma cidade para começar</div>
+        <div class="welcome-desc">Veja a previsão do tempo em tempo real com dados da Open-Meteo API</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-chat">
+    <div class="glass chat-wrap">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble assistant">
+          <div class="bubble-label">⚡ WeatherWise IA</div>
+          Olá! Sou seu assistente climático com acesso a dados reais da Open-Meteo. Pergunte sobre o clima em qualquer cidade!<br><br>
+          <span style="color:#4A5568;font-size:13px">• "Melhor praia no Brasil este fim de semana?"<br>• "Vai chover em São Paulo amanhã?"<br>• "Como está o tempo em Paris hoje?"</span>
+        </div>
+      </div>
+      <div class="chat-suggestions" id="chatSuggestions">
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">🏖️ Melhor praia no Brasil agora</button>
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">🌧️ Vai chover em SP amanhã?</button>
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">🌍 Tempo em Lisboa hoje</button>
+        <button class="chat-suggestion" onclick="sendSuggestion(this)">❄️ Cidade mais fria do Brasil</button>
+      </div>
+      <div class="chat-disclaimer">Dados climáticos em tempo real · Open-Meteo API + Claude AI</div>
+      <div class="chat-input-area">
+        <textarea id="chatInput" class="chat-textarea" placeholder="Pergunte sobre o clima em qualquer lugar..." rows="1"></textarea>
+        <button id="chatSendBtn" class="chat-send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WMO={0:{l:"Céu limpo",i:"☀️"},1:{l:"Quase limpo",i:"🌤️"},2:{l:"Parcialmente nublado",i:"⛅"},3:{l:"Nublado",i:"☁️"},45:{l:"Névoa",i:"🌫️"},48:{l:"Névoa com geada",i:"🌫️"},51:{l:"Garoa leve",i:"🌦️"},53:{l:"Garoa",i:"🌦️"},55:{l:"Garoa intensa",i:"🌧️"},61:{l:"Chuva leve",i:"🌧️"},63:{l:"Chuva moderada",i:"🌧️"},65:{l:"Chuva forte",i:"⛈️"},71:{l:"Neve leve",i:"🌨️"},73:{l:"Neve moderada",i:"❄️"},75:{l:"Neve forte",i:"❄️"},80:{l:"Pancadas leves",i:"🌦️"},81:{l:"Pancadas",i:"🌧️"},82:{l:"Pancadas fortes",i:"⛈️"},95:{l:"Trovoada",i:"⛈️"},96:{l:"Trovoada c/ granizo",i:"⛈️"},99:{l:"Granizo forte",i:"⛈️"}};
+const WDAYS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const wmo=c=>WMO[c]||{l:`Código ${c}`,i:"🌡️"};
+const $=s=>document.querySelector(s);
+
+function switchTab(tab){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('panel-'+tab).classList.add('active');document.getElementById('tab-'+tab).classList.add('active');}
+
+const content=$("#content"),input=$("#searchInput"),btn=$("#searchBtn");
+function showLoading(){content.innerHTML=`<div style="animation:fadeUp .3s ease-out"><div class="skeleton" style="height:200px;margin-bottom:20px"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px"><div class="skeleton" style="height:90px"></div><div class="skeleton" style="height:90px"></div></div><div class="skeleton" style="height:300px"></div></div>`;}
+function showError(msg){content.innerHTML=`<div class="error-msg">✗ ${msg}</div>`;}
+function uvLabel(v){if(v>10)return{t:"Extremo",bg:"rgba(239,68,68,0.15)",c:"#FCA5A5"};if(v>8)return{t:"Muito alto",bg:"rgba(239,68,68,0.15)",c:"#FCA5A5"};if(v>5)return{t:"Alto",bg:"rgba(245,158,11,0.15)",c:"#FCD34D"};if(v>2)return{t:"Moderado",bg:"rgba(34,197,94,0.12)",c:"#86EFAC"};return{t:"Baixo",bg:"rgba(34,197,94,0.12)",c:"#86EFAC"};}
+function buildCompass(deg,speed){const ticks=[0,45,90,135,180,225,270,315].map(a=>{const r=Math.PI/180,x1=26+20*Math.sin(a*r),y1=26-20*Math.cos(a*r),x2=26+23*Math.sin(a*r),y2=26-23*Math.cos(a*r);return`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round"/>`;}).join('');return`<div class="wind-compass"><svg viewBox="0 0 52 52" width="52" height="52"><circle cx="26" cy="26" r="24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>${ticks}<polygon points="26,6 23,22 26,19 29,22" fill="#60A5FA" style="transform:rotate(${deg}deg);transform-origin:26px 26px;transition:transform .8s ease-out"/><circle cx="26" cy="26" r="3" fill="#1E293B" stroke="rgba(255,255,255,0.2)" stroke-width="1"/></svg><div class="wind-speed">${Math.round(speed)} km/h</div></div>`;}
+
+function render(w){
+  const c=w.current,d=w.daily,gMin=Math.min(...d.temperature_2m_min),gMax=Math.max(...d.temperature_2m_max),gRange=gMax-gMin||1,cw=wmo(c.weather_code),uv=uvLabel(c.uv_index||0);
+  let rows='';
+  d.time.forEach((ds,i)=>{const dt=new Date(ds+'T12:00:00'),isToday=i===0,ww=wmo(d.weather_code[i]),mn=d.temperature_2m_min[i],mx=d.temperature_2m_max[i],left=((mn-gMin)/gRange)*100,width=Math.max(((mx-mn)/gRange)*100,3),warmth=(mx-gMin)/gRange,from=warmth<0.4?"#60A5FA":warmth<0.7?"#FBBF24":"#F97316",to=warmth<0.3?"#93C5FD":warmth<0.6?"#F59E0B":"#EF4444";rows+=`<div class="day-row"><div class="day-name ${isToday?'today':''}">${isToday?'Hoje':WDAYS[dt.getDay()]}</div><div class="day-icon">${ww.i}</div><div class="temp-bar-bg"><div class="temp-bar-fill" style="left:${left}%;width:${width}%;background:linear-gradient(90deg,${from},${to});animation:barGrow .6s ease-out ${.05*i}s both"></div></div><div class="temp-min">${Math.round(mn)}°</div><div class="temp-max">${Math.round(mx)}°</div></div>`;});
+  let rainHTML='';
+  if(d.precipitation_probability_max){let bars='';d.precipitation_probability_max.forEach((prob,i)=>{const dt=new Date(d.time[i]+'T12:00:00'),h=Math.max((prob/100)*80,2),bg=prob>70?"linear-gradient(180deg,#2563EB,#1D4ED8)":prob>30?"linear-gradient(180deg,#3B82F6,#2563EB)":"rgba(59,130,246,0.2)",pc=prob>50?"#60A5FA":"#4A5568";bars+=`<div class="rain-col"><div class="rain-pct" style="color:${pc}">${prob>0?prob+'%':''}</div><div class="rain-bar" style="height:${h}px;background:${bg};animation:fadeUp .4s ease-out ${.04*i}s both"></div><div class="rain-day">${i===0?'Hj':WDAYS[dt.getDay()]}</div></div>`;});rainHTML=`<div class="glass rain-section" style="animation:fadeUp .4s ease-out .35s both"><div class="forecast-title">Chance de chuva</div><div class="rain-bars">${bars}</div></div>`;}
+  let sunCard='';
+  if(d.sunrise&&d.sunrise[0]){sunCard=`<div class="detail-card" style="animation:fadeUp .4s ease-out .2s both"><div class="detail-label">Sol</div><div class="sun-row"><span style="color:#FBBF24">↑</span> ${d.sunrise[0].split('T')[1]}</div><div class="sun-row"><span style="color:#F97316">↓</span> ${d.sunset[0].split('T')[1]}</div></div>`;}
+  content.innerHTML=`<div id="results"><div class="glass hero"><div class="hero-bg-icon">${cw.i}</div><div class="hero-top"><div><div class="hero-label">Agora em</div><div class="hero-city">${w.city}</div><div class="hero-coords">${w.country} · ${w.lat.toFixed(2)}°, ${w.lon.toFixed(2)}°</div></div><div style="text-align:right"><div class="hero-temp"><span class="hero-temp-num">${Math.round(c.temperature_2m)}</span><span class="hero-temp-unit">°C</span></div><div class="hero-condition">${cw.i} ${cw.l}</div><div class="hero-feels">Sensação ${Math.round(c.apparent_temperature)}°C</div></div></div></div><div class="details-grid"><div class="detail-card" style="animation:fadeUp .4s ease-out .05s both"><div class="detail-label">Umidade</div><div class="detail-value">${c.relative_humidity_2m}<span class="detail-unit">%</span></div></div><div class="detail-card" style="animation:fadeUp .4s ease-out .1s both"><div class="detail-label">Índice UV</div><div class="detail-value">${c.uv_index!=null?c.uv_index.toFixed(1):'—'}<span class="uv-badge" style="background:${uv.bg};color:${uv.c}">${uv.t}</span></div></div><div class="detail-card" style="animation:fadeUp .4s ease-out .15s both"><div class="detail-label">Vento</div><div style="display:flex;align-items:center;gap:12px;margin-top:4px">${buildCompass(c.wind_direction_10m,c.wind_speed_10m)}</div></div>${sunCard}</div><div class="glass" style="padding:22px 22px 14px;animation:fadeUp .4s ease-out .25s both"><div class="forecast-title">Próximos ${d.time.length} dias</div>${rows}</div>${rainHTML}<div class="footer">Dados: Open-Meteo API · Atualizado em tempo real</div></div>`;
+}
+
+async function fetchWeather(cityName){
+  showLoading();
+  try{const geoRes=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=pt`),geoData=await geoRes.json();if(!geoData.results?.length){showError(`Cidade "${cityName}" não encontrada`);return;}const loc=geoData.results[0],url=`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset&timezone=auto&forecast_days=10`,fRes=await fetch(url),forecast=await fRes.json();render({city:loc.name,country:loc.country||'',lat:loc.latitude,lon:loc.longitude,current:forecast.current,daily:forecast.daily});}catch(e){showError("Erro de conexão. Verifique sua internet.");}
+}
+btn.addEventListener('click',()=>{if(input.value.trim())fetchWeather(input.value.trim());});
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&input.value.trim())fetchWeather(input.value.trim());});
+document.querySelectorAll('.preset-btn').forEach(b=>{b.addEventListener('click',()=>{input.value=b.dataset.city;fetchWeather(b.dataset.city);});});
+
+// ── Chat ──
+const chatMessages=document.getElementById('chatMessages'),chatInput=document.getElementById('chatInput'),chatSendBtn=document.getElementById('chatSendBtn');
+let chatHistory=[],isSending=false;
+chatInput.addEventListener('input',()=>{chatInput.style.height='auto';chatInput.style.height=Math.min(chatInput.scrollHeight,120)+'px';});
+chatInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+
+function sendSuggestion(btn){chatInput.value=btn.textContent.replace(/^\S+\s/,'');document.getElementById('chatSuggestions').style.display='none';sendMessage();}
+
+function appendBubble(role,text){const div=document.createElement('div');div.className=`chat-bubble ${role}`;if(role==='assistant'){div.innerHTML=`<div class="bubble-label">⚡ WeatherWise IA</div>${text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}`;}else{div.textContent=text;}chatMessages.appendChild(div);chatMessages.scrollTop=chatMessages.scrollHeight;}
+
+function showTyping(){const div=document.createElement('div');div.className='typing-indicator';div.id='typingIndicator';div.innerHTML='<span></span><span></span><span></span>';chatMessages.appendChild(div);chatMessages.scrollTop=chatMessages.scrollHeight;}
+function hideTyping(){const t=document.getElementById('typingIndicator');if(t)t.remove();}
+
+async function getCityWeather(cityName){
+  try{const geoRes=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=pt`),geoData=await geoRes.json();if(!geoData.results?.length)return null;const loc=geoData.results[0],fRes=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=7`),fd=await fRes.json(),c=fd.current,d=fd.daily;
+  const dias=d.time.map((dt,i)=>{const day=WDAYS[new Date(dt+'T12:00:00').getDay()];return`  ${day} ${dt}: ${d.temperature_2m_min[i]}–${d.temperature_2m_max[i]}°C, ${wmo(d.weather_code[i]).l}, chuva ${d.precipitation_probability_max[i]}%`;}).join('\n');
+  return`${loc.name}, ${loc.country}: agora ${c.temperature_2m}°C (sensação ${c.apparent_temperature}°C), ${wmo(c.weather_code).l}, umidade ${c.relative_humidity_2m}%, vento ${c.wind_speed_10m}km/h\nPrevisão 7 dias:\n${dias}`;}catch(e){return null;}
+}
+
+function extractCities(text) {
+  const low = text.toLowerCase();
+
+  // Apelidos e abreviações comuns
+  const aliases = {
+    'sp': 'São Paulo', 'rj': 'Rio de Janeiro', 'bh': 'Belo Horizonte',
+    'poa': 'Porto Alegre', 'bsb': 'Brasília', 'cwb': 'Curitiba',
+    'ssa': 'Salvador', 'rec': 'Recife', 'for': 'Fortaleza',
+    'são paulo': 'São Paulo', 'rio': 'Rio de Janeiro',
+    'floripa': 'Florianópolis', 'sampa': 'São Paulo'
+  };
+
+  // Verifica apelidos
+  const found = [];
+  for (const [alias, city] of Object.entries(aliases)) {
+    if (low.includes(alias)) found.push(city);
+  }
+  if (found.length) return [...new Set(found)].slice(0, 4);
+
+  // Pergunta sobre praia sem cidade específica
+  if (low.includes('praia') || low.includes('litoral')) {
+    return ['Rio de Janeiro', 'Florianópolis', 'Fortaleza', 'Salvador'];
+  }
+
+  // Lista de cidades conhecidas
+  const known = ['Rio de Janeiro','Florianópolis','Fortaleza','Salvador','Maceió','Natal','Recife','São Paulo','Curitiba','Manaus','Belém','Porto Alegre','Brasília','Campinas','Ubatuba','Ilhabela','Búzios','Porto Seguro','Jericoacoara','Lisboa','Londres','Paris','Tokyo','New York','Miami','Buenos Aires'];
+  const foundKnown = known.filter(c => low.includes(c.toLowerCase()));
+  if (foundKnown.length) return foundKnown.slice(0, 4);
+
+  // Palavras com letra maiúscula
+  const caps = (text.match(/\b[A-ZÀ-Ú][a-záàâãéèêíïóôõöúüç]{2,}(?:\s+[A-ZÀ-Ú][a-záàâãéèêíïóôõöúüç]{2,})?\b/g) || [])
+    .filter(w => !['Vai','Como','Onde','Qual','Quando','Tem','Está','Quero','Melhor','Cidade','Brasil','Tempo','Amanhã'].includes(w));
+  return caps.slice(0, 4);
+}
+
+async function sendMessage(){
+  const text=chatInput.value.trim();
+  if(!text||isSending)return;
+  isSending=true;chatSendBtn.disabled=true;chatInput.value='';chatInput.style.height='auto';
+  document.getElementById('chatSuggestions').style.display='none';
+  appendBubble('user',text);showTyping();
+  const cities=extractCities(text);
+  let ctx='';
+  if(cities.length){const data=await Promise.all(cities.map(c=>getCityWeather(c)));const valid=data.filter(Boolean);if(valid.length)ctx=`\n\n[DADOS CLIMÁTICOS REAIS - ${new Date().toLocaleDateString('pt-BR')}]\n`+valid.join('\n\n');}
+  chatHistory.push({role:'user',content:text+ctx});
+  try{
+    const res=await fetch('http://localhost:5000/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:`Você é o assistente climático do WeatherWise. Quando receber dados entre [DADOS CLIMÁTICOS REAIS], use-os para responder com precisão. Seja direto e amigável. Responda sempre em português. Não invente dados climáticos.`,messages:chatHistory})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Não consegui processar. Tente novamente.';
+    chatHistory[chatHistory.length-1]={role:'user',content:text};
+    chatHistory.push({role:'assistant',content:reply});
+    hideTyping();appendBubble('assistant',reply);
+  }catch(e){
+    hideTyping();
+    appendBubble('assistant','⚠️ Servidor local não encontrado.\n\nCertifique-se de que o server.py está rodando:\n  py server.py');
+    chatHistory.pop();
+  }
+  isSending=false;chatSendBtn.disabled=false;chatInput.focus();
+}
+</script>
+</body>
+</html>
